@@ -13,14 +13,15 @@ let tablesInitialized = false;
 let initPromise = null;
 
 app.use(async (req, res, next) => {
-  if (getSql() && !tablesInitialized) {
+  const isAuthRoute = req.url.includes('/auth') || req.url === '/';
+  if (!isAuthRoute && getSql() && !tablesInitialized) {
     if (!initPromise) {
       initPromise = ensureTablesExist()
         .then(() => {
           tablesInitialized = true;
         })
         .catch((err) => {
-          console.error('Failed to auto-initialize Neon DB tables:', err);
+          console.error('Failed to auto-initialize Neon DB tables:', err.message || err);
           initPromise = null;
         });
     }

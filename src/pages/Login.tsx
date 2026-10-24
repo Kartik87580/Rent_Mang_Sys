@@ -1,9 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Home, Lock, User, AlertCircle } from 'lucide-react';
-import { setAuthState } from '../services/storage';
+import { login } from '../services/storage';
 import { Button } from '../components/ui/Button';
-import { Input } from '../components/ui/Input';
 
 export const Login: React.FC = () => {
   const [username, setUsername] = useState('');
@@ -12,20 +11,23 @@ export const Login: React.FC = () => {
   const [isLoading, setIsLoading] = useState(false);
   const navigate = useNavigate();
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
     setIsLoading(true);
 
-    setTimeout(() => {
-      if (username === 'Admin' && password === 'Admin@123') {
-        setAuthState(true);
+    try {
+      const result = await login(username, password);
+      if (result.success) {
         navigate('/dashboard');
       } else {
-        setError('Invalid username or password. Please use Admin / Admin@123');
+        setError(result.error || 'Invalid username or password.');
       }
+    } catch (err: any) {
+      setError('An error occurred during authentication. Please try again.');
+    } finally {
       setIsLoading(false);
-    }, 400);
+    }
   };
 
   return (
@@ -87,8 +89,8 @@ export const Login: React.FC = () => {
         </form>
 
         <div className="mt-8 pt-6 border-t border-slate-100 text-center">
-          <p className="text-xs text-slate-400">Demo Credentials:</p>
-          <p className="text-xs font-mono font-medium text-slate-600 mt-1">Username: Admin | Password: Admin@123</p>
+          <p className="text-xs text-slate-400">Thank you</p>
+          <p className="text-xs font-mono font-medium text-slate-600 mt-1">Rent Management System</p>
         </div>
       </div>
     </div>

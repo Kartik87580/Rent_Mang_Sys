@@ -53,6 +53,32 @@ apiRouter.get('/', (req, res) => {
   });
 });
 
+// POST /auth/login - Secure user authentication against .env / environment variables
+apiRouter.post('/auth/login', (req, res) => {
+  const { username, password } = req.body || {};
+
+  const expectedUser = (process.env.ADMIN_USERNAME || 'DEV').trim();
+  const expectedPass = (process.env.ADMIN_PASSWORD || '1439').trim();
+
+  if (
+    typeof username === 'string' &&
+    typeof password === 'string' &&
+    username.trim() === expectedUser &&
+    password.trim() === expectedPass
+  ) {
+    return res.json({
+      success: true,
+      message: 'Login successful',
+      user: { username: expectedUser }
+    });
+  }
+
+  return res.status(401).json({
+    success: false,
+    error: 'Invalid username or password.'
+  });
+});
+
 // Middleware to ensure DB connection is available
 apiRouter.use(async (req, res, next) => {
   if (!getSql()) {

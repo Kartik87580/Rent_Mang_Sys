@@ -184,6 +184,38 @@ export const setAuthState = (isAuthenticated: boolean): void => {
   }
 };
 
+export const login = async (
+  username: string,
+  password: string
+): Promise<{ success: boolean; error?: string }> => {
+  try {
+    const response = await fetch(`${API_BASE}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ username, password })
+    });
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok || !data.success) {
+      return {
+        success: false,
+        error: data.error || 'Invalid username or password.'
+      };
+    }
+
+    setAuthState(true);
+    return { success: true };
+  } catch (error: any) {
+    return {
+      success: false,
+      error: error.message || 'Cannot reach authentication server.'
+    };
+  }
+};
+
 export const logout = (): void => {
   localStorage.removeItem(AUTH_KEY);
 };
