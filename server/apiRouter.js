@@ -1,5 +1,5 @@
 import express from 'express';
-import { sql, generateId, ensureTablesExist } from './db.js';
+import { sql, getSql, generateId, ensureTablesExist } from './db.js';
 
 export const apiRouter = express.Router();
 
@@ -44,10 +44,21 @@ function formatPayment(row) {
   };
 }
 
+// GET / or /api info
+apiRouter.get('/', (req, res) => {
+  res.json({
+    status: 'ok',
+    message: 'Rent Management System API is running',
+    timestamp: new Date().toISOString()
+  });
+});
+
 // Middleware to ensure DB connection is available
 apiRouter.use(async (req, res, next) => {
-  if (!sql) {
-    return res.status(500).json({ error: 'DATABASE_URL is not configured.' });
+  if (!getSql()) {
+    return res.status(500).json({ 
+      error: 'DATABASE_URL is not configured. Please add DATABASE_URL under Vercel Project Settings > Environment Variables.' 
+    });
   }
   next();
 });

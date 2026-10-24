@@ -3,13 +3,36 @@ import dotenv from 'dotenv';
 
 dotenv.config();
 
-const databaseUrl = process.env.DATABASE_URL;
+const getDatabaseUrl = () => {
+  const url = process.env.DATABASE_URL;
+  return url ? url.replace(/^["']|["']$/g, '').trim() : '';
+};
 
-if (!databaseUrl) {
+if (!getDatabaseUrl()) {
   console.warn('⚠️ WARNING: DATABASE_URL is not set in environment or .env file!');
 }
 
-export const sql = databaseUrl ? neon(databaseUrl) : null;
+let _sqlInstance = null;
+let _cachedUrl = null;
+
+export const getSql = () => {
+  const url = getDatabaseUrl();
+  if (!url) return null;
+  if (!_sqlInstance || _cachedUrl !== url) {
+    _cachedUrl = url;
+    _sqlInstance = neon(url);
+  }
+  return _sqlInstance;
+};
+
+// Tagged template SQL runner that dynamically uses current Neon connection
+export const sql = (strings, ...values) => {
+  const client = getSql();
+  if (!client) {
+    throw new Error('Database connection not configured. Check DATABASE_URL in Vercel environment variables or .env');
+  }
+  return client(strings, ...values);
+};
 
 export const generateId = () => {
   return 'id_' + Math.random().toString(36).substring(2, 9) + Date.now().toString(36);
@@ -17,8 +40,9 @@ export const generateId = () => {
 
 // Ensure database tables exist
 export async function ensureTablesExist() {
-  if (!sql) {
-    throw new Error('Database connection not configured. Check DATABASE_URL in .env');
+  const client = getSql();
+  if (!client) {
+    throw new Error('Database connection not configured. Check DATABASE_URL in Vercel environment variables or .env');
   }
 
   // Create properties table
